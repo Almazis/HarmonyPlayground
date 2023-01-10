@@ -4,12 +4,24 @@ using HarmonyLib;
 
 class ppp
 {
-    private static List<string> ress = new List<string>() { "11", "222" };
-        
+    private static string[] ress = new string[] { "11", "222" };
+    private static int counter = 0;
     static void MyPostfix(ref string __result)
     {
-        __result = ress[0];
-        ress.RemoveAt(0);
+        __result = ress[counter];
+        counter++;
+    }
+
+}
+
+class NowPatch
+{
+    private static DateTime[] ress = new DateTime[] {new DateTime(2012, 1, 1), new DateTime(2007,12,1)};
+    private static int counter = 0;
+    static void MyPostfix(ref DateTime __result)
+    {
+        __result = ress[counter];
+        counter++;
     }
 
 }
@@ -25,7 +37,7 @@ class Program
         Debug.Assert(r2 == "patched");
     }
     
-    static void Main(string[] args)
+    static void Main2(string[] args)
     {
         var harmony = new Harmony("com.example.patch");
 
@@ -38,6 +50,39 @@ class Program
         Console.ReadLine();
     }
 
+    static void Main3(string[] args)
+    {
+        DateTime dtMain = new DateTime(2012, 12, 12);
+        var harmony = new Harmony("com.example.patch");
+        
+        var mOriginal = SymbolExtensions.GetMethodInfo(() => dtMain.ToLongDateString());
+        var mPostfix = AccessTools.Method(typeof(ppp), "MyPostfix");
+
+        harmony.Patch(mOriginal, postfix: new HarmonyMethod(mPostfix));
+        Console.WriteLine(dtMain.ToLongDateString());
+        Console.WriteLine(dtMain.ToLongDateString());
+
+        Console.WriteLine(StrDt2013());
+        Console.ReadLine();
+    }
+    
+    static void Main(string[] args)
+    {
+        var harmony = new Harmony("com.example.patch");
+        
+        // var mOriginal = SymbolExtensions.GetMethodInfo(() => DtNow());
+        var mOriginal = AccessTools.PropertyGetter(typeof(DateTime), "Now");
+
+        var mPostfix = AccessTools.Method(typeof(NowPatch), "MyPostfix");
+
+        harmony.Patch(mOriginal, postfix: new HarmonyMethod(mPostfix));
+        Console.WriteLine(DtNow());
+        Console.WriteLine(DtNow());
+
+        // Console.WriteLine(StrDt2013());
+        Console.ReadLine();
+    }
+    
     static private DateTime DtNow()
     {
         return DateTime.Now;
