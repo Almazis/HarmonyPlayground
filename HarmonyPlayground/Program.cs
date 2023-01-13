@@ -12,6 +12,18 @@ class ppp
         counter++;
     }
 
+    static string MyExtraMethod()
+    {
+        var res = ress[counter];
+        counter++;
+        return res;
+    }
+    static System.Reflection.MethodInfo m_MyExtraMethod = SymbolExtensions.GetMethodInfo(() => MyExtraMethod());
+    static IEnumerable<CodeInstruction> MyTranspiler(IEnumerable<CodeInstruction> instructions)
+    {
+        yield return new CodeInstruction(OpCodes.Call, m_MyExtraMethod);
+        yield return new CodeInstruction(OpCodes.Ret);
+    }
 }
 
 class NowPatch
@@ -66,7 +78,7 @@ class Program
         Console.ReadLine();
     }
     
-    static void Main(string[] args)
+    static void Main4(string[] args)
     {
         var harmony = new Harmony("com.example.patch");
         
@@ -80,6 +92,22 @@ class Program
         Console.WriteLine(DtNow());
 
         // Console.WriteLine(StrDt2013());
+        Console.ReadLine();
+    }
+    
+    static void Main(string[] args)
+    {
+        DateTime dtMain = new DateTime(2012, 12, 12);
+        var harmony = new Harmony("com.example.patch");
+
+        var mOriginal = SymbolExtensions.GetMethodInfo(() => dtMain.ToLongDateString());
+        var mPostfix = AccessTools.Method(typeof(ppp), "MyTranspiler");
+        
+        harmony.Patch(mOriginal, transpiler: new HarmonyMethod(mPostfix));
+
+        Console.WriteLine(dtMain.ToLongDateString());
+        Console.WriteLine(dtMain.ToLongDateString());
+
         Console.ReadLine();
     }
     
